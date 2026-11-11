@@ -1,0 +1,28 @@
+name: Sync Linus mainline
+
+on:
+  schedule:
+    - cron: '23 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-linus-mainline
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'avlnoir/linux' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Merge torvalds/linux into master
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh api --method POST "repos/${GH_REPO}/merge-upstream" \
+            -f branch=master \
+            --jq '"\(.message) [\(.merge_type)]"'
